@@ -35,8 +35,15 @@ object MyModule {
   }
 
   // Exercise 1: Write a function to compute the nth fibonacci number
+  def fib(n: Int): Int = {
+    @annotation.tailrec
+    def go(m: Int, last: Int = 1, acc: Int = 1): Int = {
+      if (m == n - 1) acc
+      else go(m + 1, acc, acc + last)
+    }
 
-  def fib(n: Int): Int = ???
+    if (n <= 1) n else go(1)
+  }
 
   // This definition and `formatAbs` are very similar..
   private def formatFactorial(n: Int) = {
@@ -140,7 +147,17 @@ object PolymorphicFunctions {
 
   // Exercise 2: Implement a polymorphic function to check whether
   // an `Array[A]` is sorted
-  def isSorted[A](as: Array[A], gt: (A,A) => Boolean): Boolean = ???
+  def isSorted[A](as: Array[A], gt: (A,A) => Boolean): Boolean = {
+    @annotation.tailrec
+    def go(n: Int): Boolean = {
+      if (n == as.length) true
+      else if (gt(as(n - 1), as(n)) == false) false
+      else go(n + 1)
+    }
+
+    go(1)
+
+  }
 
   // Polymorphic functions are often so constrained by their type
   // that they only have one implementation! Here's an example:
@@ -152,14 +169,24 @@ object PolymorphicFunctions {
 
   // Note that `=>` associates to the right, so we could
   // write the return type as `A => B => C`
-  def curry[A,B,C](f: (A, B) => C): A => (B => C) =
-    ???
+  // Returns a curried version of our original Function2[A, B, C] that enables the
+  // the partial application of the method. E.g. if we call curry on
+  // def curryTest(a: Int, b: Int): Int = a + b, such as
+  // val c = curry[Int, Int, Int](curryTest)
+  // we'll be able to invoke val c1 = c(1) and val c2 = c1(2), where c2 will equal 3.
+  // It is worth noting that partial1(1, curryTest) == c1.
+  def curry[A,B,C](f: (A, B) => C): A => (B => C) = {
+    (a: A) => (b: B) => f(a, b)
+  }
 
   // NB: The `Function2` trait has a `curried` method already
 
-  // Exercise 4: Implement `uncurry`
-  def uncurry[A,B,C](f: A => B => C): (A, B) => C =
-    ???
+  // Exercise 4: Implement `uncurry`.
+  def uncurry[A,B,C](f: A => B => C): (A, B) => C = {
+    // f(a) returns a function B => C
+    // if we call this function with a parameter of type B, we obtain a type C
+    (a: A, b: B) => f(a)(b)
+  }
 
   /*
   NB: There is a method on the `Function` object in the standard library,
@@ -172,7 +199,9 @@ object PolymorphicFunctions {
   */
 
   // Exercise 5: Implement `compose`
-
-  def compose[A,B,C](f: B => C, g: A => B): A => C =
-    ???
+  def compose[A,B,C](f: B => C, g: A => B): A => C = {
+    // "f of g of a"
+    (a: A) => f(g(a))
+  }
 }
+
