@@ -50,15 +50,70 @@ object List { // `List` companion object. Contains functions for creating and wo
     foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
 
-  def tail[A](l: List[A]): List[A] = ???
+  def tail[A](l: List[A]): List[A] = {
+    l match {
+      case Cons(x, xs) => xs
+      case y => y
+    }
+  }
 
-  def setHead[A](l: List[A], h: A): List[A] = ???
+  def setHead[A](l: List[A], h: A): List[A] = {
+    l match {
+      case Cons(x, xs) => Cons(h, xs)
+      case y => y
+    }
+  }
 
-  def drop[A](l: List[A], n: Int): List[A] = ???
+  // drop the first n elements of the list
+  @annotation.tailrec
+  def drop[A](l: List[A], n: Int): List[A] = {
+    if (n <= 0) l
+    else l match {
+      case Nil => Nil
+      case Cons(_,t) => drop(t, n-1)
+    }
+  }
 
-  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = ???
+  // continue to drop elements that satisfy a condition expressed in f
+  @annotation.tailrec
+  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = {
+    l match {
+      case Nil => Nil
+      case Cons(h, t) => {
+        if (f(h) == false) Cons(h, t)
+        else dropWhile(t, f)
+      }
+    }
+  }
 
-  def init[A](l: List[A]): List[A] = ???
+  // Return l's all but last element
+  def init[A](l: List[A]): List[A] = {
+    @annotation.tailrec
+    def go(h: List[A], t: List[A]): List[A] = {
+      t match {
+        // our stop condition -> for the last element of singly linked lists the tail attr will always be Nil
+        case Cons(_, Nil) => h
+        case Cons(x, xs) => go(List.append[A](h, List(x)), xs)
+      }
+    }
+    l match {
+      case Nil => Nil
+      case Cons(h, t) => go(List(h), t)
+    }
+  }
+
+  // Alternative implementation that doesn't rely on append method
+  def init2[A](l: List[A]): List[A] = {
+    l match {
+      case Nil => Nil
+      // this case condition is the recursive function call's short circuit.
+      // For lists of longer than 2, the pattern will always evaluate to Cons(h, t)
+      // until we have iterated up to the last element of the list, where it will match this condition.
+      // The last call will thus return a value (Nil), rather than calling the function again.
+      case Cons(_, Nil) => Nil
+      case Cons(h, t) => Cons(h, init(t))
+    }
+  }
 
   def length[A](l: List[A]): Int = ???
 
