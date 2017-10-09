@@ -115,9 +115,41 @@ object List { // `List` companion object. Contains functions for creating and wo
     }
   }
 
-  def length[A](l: List[A]): Int = ???
+  // "Note that foldRight must traverse all the way to the end of the list (pushing frames
+  // onto the call stack as it goes) before it can begin collapsing it"!
+  // That's how we can add to y in f. y is an uninitialised object when foldRight is first
+  // called recursively.
+  def length[A](l: List[A]): Int = foldRight(l, 0)((x, y) => y + 1)
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = ???
+  // This makes much more sense to me than foldRight. Here we can use z to initialize our
+  // 'accumulator' with a value. We start collapsing right away. The z value we pass to our
+  // second call to foldLeft will already be the result of f(z,x), let's say 0 + x if f is the
+  // sum function.
+  // Important takeaway point here: keep the order of operations in sight. We first execute the
+  // operations *inside* the parantheses - in this case f(z,x) before anything else.
+  @annotation.tailrec
+  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
+    l match {
+      case Nil => z
+      case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
+    }
+  }
+
+  def sum3(l: List[Int]): Int = foldLeft(l, 0)(_ + _)
+
+  def product3(l: List[Double]) = foldLeft(l, 1.0)(_ * _)
+
+  def length2[A](l: List[A]): Int = foldLeft(l, 0)((x, y) => x + 1)
+
+  def reverse[A](l: List[A]) = foldLeft(l, Nil:List[A])((x, y) => Cons(y,x))
+
+  def append2[A](l1: List[A], l2: List[A]): List[A] = {
+    l2 match {
+      case Nil => Nil
+      case Cons(x, xs) => foldLeft(l1, Nil:List[A])((b,a) => append())
+    }
+    foldLeft(l1, Nil:List[A])((x, y) => Cons(y,x))
+  }
 
   def map[A,B](l: List[A])(f: A => B): List[B] = ???
 }

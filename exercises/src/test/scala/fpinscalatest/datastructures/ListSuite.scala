@@ -35,4 +35,8 @@ class ListSuite extends FlatSpec {
     assert(List.init2(testList) === List(1,2))
   }
 
+  it should "calculate the length of lists" in {
+    assert(List.length(testList) === 3)
+  }
+
 }
