@@ -72,9 +72,52 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   def init[A](l: List[A]): List[A] = ???
 
-  def length[A](l: List[A]): Int = ???
+  def length[A](l: List[A]): Int = foldRight[A, Int](l, 0)((x, y) => 1 + y)
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = ???
+  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = l match {
+    case Nil => z
+    case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
+  }
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = ???
+  def sum3(ns: List[Int]) =
+    foldLeft(ns, 0)(_ + _)
+
+  def product3(ns: List[Double]) =
+    foldLeft(ns, 1.0)(_ * _)
+
+  def length3[A](l: List[A]): Int = foldLeft(l, 0)((x, y) => x + 1)
+
+  def reverse[A](l: List[A]): List[A] = foldLeft(l, List[A]())((x, y) => Cons(y,x))
+
+  def append2[A](l1: List[A], l2: List[A]): List[A] = foldRight(l1, l2)((x,y) => Cons(x, y))
+
+  def concat[A](l: List[List[A]]): List[A] = foldLeft(l, List[A]())((x,y) => append2(x,y))
+
+  def addOne(l: List[Int]): List[Int] = l match {
+    case Nil => Nil
+    case Cons(x,xs) => Cons(x + 1, addOne(xs))
+  }
+
+  def dToS(l: List[Double]): List[String] = l match {
+    case Nil => Nil
+    case Cons(x,xs) => Cons(x.toString, dToS(xs))
+  }
+
+  def map[A,B](l: List[A])(f: A => B): List[B] = l match {
+    case Nil => Nil
+    case Cons(x, xs) => Cons(f(x), map(xs)(f))
+  }
+
+  def filter[A](l: List[A])(f: A => Boolean): List[A] = l match {
+    case Nil => Nil
+    case Cons(x, xs) => if (f(x)) Cons(x, filter(xs)(f)) else filter(xs)(f)
+  }
+
+  def flatMap[A,B](l: List[A])(f: A => List[B]): List[B] = l match {
+    case Nil => Nil
+    case Cons(x, xs) => append2(f(x), flatMap(xs)(f))
+  }
+
+  def filter2[A](l: List[A])(f: A => Boolean): List[A] = flatMap(l)(x => if (f(x)) List(x) else List())
+
 }
