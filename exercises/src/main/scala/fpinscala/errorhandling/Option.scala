@@ -4,15 +4,29 @@ package fpinscala.errorhandling
 import scala.{Option => _, Some => _, Either => _, _} // hide std library `Option`, `Some` and `Either`, since we are writing our own in this chapter
 
 sealed trait Option[+A] {
-  def map[B](f: A => B): Option[B] = ???
 
-  def getOrElse[B>:A](default: => B): B = ???
+  /* Apply f if the Option is not None. */
+  def map[B](f: A => B): Option[B] = this match {
+    case None => None
+    case Some(a) => Some(f(a))
+  }
 
-  def flatMap[B](f: A => Option[B]): Option[B] = ???
+  def getOrElse[B>:A](default: => B): B = this match {
+    case None => default
+    case Some(b) => b
+  }
 
-  def orElse[B>:A](ob: => Option[B]): Option[B] = ???
+  /*
+  Apply f, which may fail, to the Option if not None.
+   */
+  def flatMap[B](f: A => Option[B]): Option[B] = map(f).getOrElse(None)
 
-  def filter(f: A => Boolean): Option[A] = ???
+  def orElse[B>:A](ob: => Option[B]): Option[B] = this match {
+    case None => ob
+    case Some(a) => Some(a)
+  }
+
+  def filter(f: A => Boolean): Option[A] = if (this.map(f).getOrElse(false)) this else None
 }
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
@@ -38,11 +52,32 @@ object Option {
   def mean(xs: Seq[Double]): Option[Double] =
     if (xs.isEmpty) None
     else Some(xs.sum / xs.length)
+
   def variance(xs: Seq[Double]): Option[Double] = ???
 
-  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
+  /*
+  map2 lifts a function that operates on non-optional values to the Option context.
+   */
+  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = a match {
+    case None => None
+    case Some(aa) => b match {
+      case None => None
+      case Some(bb) => Some(f(aa,bb))
+    }
+  }
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] = ???
+  /*
+  we use foldRight because the :: method is right associative
+  map2 returns None if one of the arguments are None instead of executing 'f', so we don't need special logic for handling None cases.
+   */
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = {
+    a.foldRight[Option[List[A]]](Some(Nil))((x,y) => map2(x,y)(_ :: _))
+  }
 
-  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = ???
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = {
+    a.foldRight[Option[List[B]]](Some(Nil))((x, y) => map2(f(x),y)(_ :: _))
+  }
+
+  def sequence1[A](a: List[Option[A]]): Option[List[A]] = traverse(a)(x => x)
+
 }
