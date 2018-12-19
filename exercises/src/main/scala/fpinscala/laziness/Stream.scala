@@ -8,20 +8,25 @@ trait Stream[+A] {
     case Cons(h, t) => h() :: t().toList
   }
 
-  def toList2: List[A] = {
-    def go(acc: List[A], : A): List[A] = {
-
-    }
-  }
-
-  def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
+  /*
+  The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
+  If the second argument doesn't get evaluated, `f` exits.
+   */
+  def foldRight[B](z: => B)(f: (A, => B) => B): B =
     this match {
       case Cons(h,t) => f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
       case _ => z
     }
 
+  /*
+  Here `b` is a default value rather than an accumulator, the way we used it when implementing `sum` or `product`.
+  If p(a) returns `true` the function immediately terminates, given the logic of ||, as `b` will never get evaluated,
+  which is the precondition for recursion.
+  Here `b` is the unevaluated recursive step that folds the tail of the stream. If `p(a)` returns `true`,
+  `b` will never be evaluated and the computation terminates early.
+   */
   def exists(p: A => Boolean): Boolean = 
-    foldRight(false)((a, b) => p(a) || b) // Here `b` is the unevaluated recursive step that folds the tail of the stream. If `p(a)` returns `true`, `b` will never be evaluated and the computation terminates early.
+    foldRight(false)((a, b) => p(a) || b)
 
   @annotation.tailrec
   final def find(f: A => Boolean): Option[A] = this match {
@@ -40,7 +45,10 @@ trait Stream[+A] {
 
   def takeWhile(p: A => Boolean): Stream[A] = ???
 
-  def forAll(p: A => Boolean): Boolean = foldRight()
+  /*
+  Given the logic of &&, if p(a) evaluates to false, it never moves onto executing b.
+   */
+  def forAll(p: A => Boolean): Boolean = foldRight(true)((a, b) => p(a) && b)
 
   def headOption: Option[A] = ???
 
